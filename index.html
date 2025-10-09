@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="logo.png" type="image/png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Juros Compostos Avançada</title>
+    <style>
+        /* --- CSS: Variáveis e Estilo Base --- */
+        :root {
+            /* Light Mode (Padrão) */
+            --bg-color: #f7f9fc;
+            --card-bg: #ffffff;
+            --text-color: #1a1a2e;
+            --primary-color: #007bff;
+            --accent-color: #28a745;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --border-color: #e0e6ed;
+            --table-header-bg: #f1f1f1;
+            --table-row-hover: #eaf1f8;
+        }
+
+        /* Dark Mode */
+        body.dark-mode {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --primary-color: #4a90e2;
+            --accent-color: #38c172;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --border-color: #333333;
+            --table-header-bg: #222222;
+            --table-row-hover: #2a2a2a;
+        }
+
+        /* Base Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.4s, color 0.4s;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        /* --- REMOVER SETAS DO INPUT TYPE="NUMBER" (o que você pediu!) --- */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield; /* Para Firefox */
+        }
+        /* ------------------------------------------------------------------ */
+
+
+        /* --- Seletor de Tema (Toggle) --- */
+        .theme-toggle-container {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 8px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.9em;
+            transition: background-color 0.3s;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--accent-color);
+        }
+
+        /* --- Input Group Styling --- */
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .input-field {
+            padding: 15px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.3s, background-color 0.3s;
+            position: relative;
+        }
+
+        .input-field:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: var(--text-color);
+        }
+        
+        .input-with-select {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            transition: border-bottom-color 0.3s;
+        }
+        
+        .input-with-select input[type="number"] {
+            flex-grow: 1;
+            border-bottom: none;
+            padding-right: 10px;
+            border-right: 1px solid var(--border-color);
+        }
+        
+        .input-with-select select {
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            padding: 10px 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        
+        .input-field:focus-within .input-with-select {
+            border-bottom-color: var(--primary-color);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 0;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-color);
+            font-size: 1.1em;
+            transition: border-bottom-color 0.3s;
+        }
+
+        input[type="number"]:focus {
+            border-bottom-color: var(--primary-color);
+            outline: none;
+        }
+
+        /* Garante que inputs simples tenham o foco */
+        .input-field:focus-within input:not(.input-with-select input) {
+             border-bottom-color: var(--primary-color);
+        }
+        
+        /* --- Button and Summary --- */
+        button.calculate-btn {
+            width: 100%;
+            padding: 18px;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.4);
+        }
+
+        button.calculate-btn:hover {
+            background-color: #1e7e34;
+            transform: translateY(-2px);
+        }
+
+        .summary {
+            margin-top: 35px;
+            padding: 25px;
+            background-color: var(--table-header-bg);
+            border-radius: 8px;
+            text-align: left;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .summary h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 1.4em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .summary p {
+            margin: 10px 0;
+            font-size: 1em;
+        }
+
+        .summary strong {
+            color: var(--accent-color);
+            font-size: 1.1em;
+            font-weight: 700;
+        }
+        
+        .summary p:last-child strong {
+            color: var(--primary-color);
+            font-size: 1.2em;
+        }
+
+
+        /* --- Tabela de Resultados --- */
+        .results-table {
+            margin-top: 40px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+            min-width: 700px;
+        }
+
+        th, td {
+            padding: 15px 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--table-header-bg);
+            color: var(--text-color);
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95em;
+            border-top: none;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        body.dark-mode tbody tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        tbody tr:hover {
+            background-color: var(--table-row-hover);
+        }
+
+        .center-text {
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <div class="container">
+        <div class="theme-toggle-container">
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeToggleBtn">Mudar para Dark Mode</button>
+        </div>
+        
+        <h1>Rendimento Composto: A Força dos Juros</h1>
+
+        <div class="input-group">
+            <div class="input-field">
+                <label for="capitalInicial">Capital Inicial (R$)</label>
+                <input type="number" id="capitalInicial" value="" min="0" placeholder="Ex: 5000">
+            </div>
+            
+            <div class="input-field">
+                <label for="aporteMensal">Aporte Mensal (R$)</label>
+                <input type="number" id="aporteMensal" value="" min="0" placeholder="Ex: 300">
+            </div>
+            
+            <div class="input-field">
+                <label for="taxaJuros">Taxa de Juros (%)</label>
+                <div class="input-with-select">
+                    <input type="number" id="taxaJuros" value="" min="0" step="0.01" placeholder="Ex: 0.7 ou 10.5">
+                    <select id="unidadeJuros">
+                        <option value="mensal">Mensal</option>
+                        <option value="anual">Anual</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-field">
+                <label for="periodoValor">Período de Investimento</label>
+                <div class="input-with-select">
+                    <input type="number" id="periodoValor" value="" min="1" placeholder="Ex: 5 ou 60">
+                    <select id="unidadePeriodo">
+                        <option value="meses">Meses</option>
+                        <option value="anos">Anos</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <button class="calculate-btn" onclick="calcularJurosCompostos()">Calcular Crescimento</button>
+
+        <div id="resumo" class="summary" style="display: none;">
+            </div>
+
+        <div class="results-table">
+            <table id="tabelaResultado">
+                </table>
+        </div>
+    </div>
+
+    <script>
+        /* --- JavaScript --- */
+
+        /**
+         * Formata um número para a moeda brasileira (R$).
+         */
+        function formatarMoeda(valor) {
+            return parseFloat(valor).toLocaleString('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        /**
+         * Alterna entre os modos Light e Dark.
+         */
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeToggleBtn');
+            const isDarkMode = body.classList.toggle('dark-mode');
+
+            if (isDarkMode) {
+                btn.textContent = 'Mudar para Light Mode';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                btn.textContent = 'Mudar para Dark Mode';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        /**
+         * Aplica o tema salvo no localStorage ao carregar.
+         */
+        function applySavedTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const body = document.body;
+            const btn = document.getElementById('themeToggleBtn');
+
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-mode');
+                btn.textContent = 'Mudar para Light Mode';
+            } else {
+                body.classList.remove('dark-mode');
+                btn.textContent = 'Mudar para Dark Mode';
+            }
+        }
+
+        /**
+         * Converte a taxa de juros anual para mensal.
+         * Fórmula: (1 + taxa_anual) ^ (1/12) - 1
+         */
+        function converterAnualParaMensal(taxaAnual) {
+            return Math.pow(1 + taxaAnual, 1/12) - 1;
+        }
+
+        /**
+         * Converte o período de anos para meses.
+         */
+        function converterAnosParaMeses(anos) {
+            return anos * 12;
+        }
+
+
+        /**
+         * Calcula os juros compostos e gera a tabela de resultados.
+         */
+        function calcularJurosCompostos() {
+            // 1. Coleta e validação dos valores de entrada
+            const capitalInicial = parseFloat(document.getElementById('capitalInicial').value) || 0;
+            const aporteMensal = parseFloat(document.getElementById('aporteMensal').value) || 0;
+            let taxaJurosPercentual = parseFloat(document.getElementById('taxaJuros').value) || 0;
+            const unidadeJuros = document.getElementById('unidadeJuros').value;
+            let periodoValor = parseFloat(document.getElementById('periodoValor').value) || 0;
+            const unidadePeriodo = document.getElementById('unidadePeriodo').value;
+            
+            // Variáveis de cálculo
+            let periodoMeses;
+            let taxaJurosDecimal;
+
+            // 2. Conversão do Período para Meses
+            if (unidadePeriodo === 'anos') {
+                periodoMeses = converterAnosParaMeses(periodoValor);
+            } else { // 'meses'
+                periodoMeses = periodoValor;
+            }
+            
+            // 3. Conversão da Taxa para Mensal
+            taxaJurosDecimal = taxaJurosPercentual / 100; // Converte a % para decimal
+
+            if (unidadeJuros === 'anual') {
+                // Converte a taxa anual decimal para a taxa mensal decimal
+                taxaJurosDecimal = converterAnualParaMensal(taxaJurosDecimal);
+            }
+            
+            // 4. Validação final
+            periodoMeses = Math.round(periodoMeses); // Garantir número inteiro de meses
+            if (periodoMeses < 1) {
+                alert("O período deve ser de pelo menos 1 mês.");
+                return;
+            }
+            if (capitalInicial === 0 && aporteMensal === 0) {
+                 alert("Você deve informar o Capital Inicial e/ou o Aporte Mensal.");
+                 return;
+            }
+            
+            // 5. Variáveis de acumulação
+            let saldoAtual = capitalInicial;
+            let totalAportado = capitalInicial;
+            let totalJuros = 0;
+
+            const tabelaBody = document.getElementById('tabelaResultado');
+            const resumoDiv = document.getElementById('resumo');
+
+            // Limpa resultados anteriores
+            tabelaBody.innerHTML = '';
+            resumoDiv.style.display = 'none';
+
+            
+            // 6. Criação do cabeçalho da tabela
+            const cabecalho = `
+                <thead>
+                    <tr>
+                        <th class="center-text">Mês</th>
+                        <th>Saldo Início (R$)</th>
+                        <th>Aporte (R$)</th>
+                        <th>Juros do Mês (R$)</th>
+                        <th>Saldo Final (R$)</th>
+                        <th>Lucro Total (R$)</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            let linhasTabela = '';
+
+            // 7. Loop de cálculo mês a mês
+            for (let mes = 1; mes <= periodoMeses; mes++) {
+                // Saldo antes de tudo
+                const saldoInicioDoMes = saldoAtual;
+
+                // 1. Juros
+                // Arredonda para evitar imprecisão de ponto flutuante, mas usa o valor total para o cálculo.
+                const jurosDoMes = saldoInicioDoMes * taxaJurosDecimal;
+                totalJuros += jurosDoMes;
+                saldoAtual += jurosDoMes;
+
+                // 2. Aporte (Assume-se que o aporte é feito no final/início do mês)
+                saldoAtual += aporteMensal;
+                
+                // 3. Acumulo total aportado
+                if (mes > 1) {
+                    totalAportado += aporteMensal;
+                } else if (mes === 1 && capitalInicial === 0 && aporteMensal > 0) {
+                     totalAportado = aporteMensal;
+                }
+                
+                const lucroTotal = saldoAtual - totalAportado;
+
+                // 4. Monta a linha da tabela
+                linhasTabela += `
+                    <tr>
+                        <td class="center-text">${mes}</td>
+                        <td>${formatarMoeda(saldoInicioDoMes)}</td>
+                        <td>${formatarMoeda(aporteMensal)}</td>
+                        <td>${formatarMoeda(jurosDoMes)}</td>
+                        <td>${formatarMoeda(saldoAtual)}</td>
+                        <td>${formatarMoeda(lucroTotal)}</td>
+                    </tr>
+                `;
+            }
+
+            // 8. Exibe a tabela completa
+            tabelaBody.innerHTML = cabecalho + linhasTabela + '</tbody>';
+
+            // 9. Exibe o resumo final
+            const saldoFinal = saldoAtual;
+
+            const resumoHTML = `
+                <h2>Resumo da Projeção (${periodoMeses} Meses)</h2>
+                <p>Capital Inicial: <strong>${formatarMoeda(capitalInicial)}</strong></p>
+                <p>Total de Aportes Adicionais: <strong>${formatarMoeda(totalAportado - capitalInicial)}</strong></p>
+                <p>Valor Total Investido (Principal + Aportes): <strong>${formatarMoeda(totalAportado)}</strong></p>
+                <p>Juros Acumulados (Rendimento): <strong>${formatarMoeda(totalJuros)}</strong></p>
+                <hr style="border-color: var(--border-color); margin: 15px 0;">
+                <p>Valor Total Final: <strong>${formatarMoeda(saldoFinal)}</strong></p>
+                <p>Lucro Líquido (Rendimento Total): <strong>${formatarMoeda(saldoFinal - totalAportado)}</strong></p>
+            `;
+
+            resumoDiv.innerHTML = resumoHTML;
+            resumoDiv.style.display = 'block';
+        }
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+             applySavedTheme(); // Aplica o tema salvo
+        });
+    </script>
+</body>
+</html>
